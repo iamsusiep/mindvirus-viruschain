@@ -36,14 +36,14 @@ ports. The local controller passes inference requests through authenticated
 Modal exec to the server's loopback interface.
 
 Generation uses seed 0, temperature 0.7 for agents and 0 for judges, a 32,768-token
-context window, and output limits of 1,024 tokens for agents and 2,048 for judges.
+context window, and output limits of 4,096 tokens for agents and 2,048 for judges.
 The ChatML role-boundary stop prevents generation of fictitious following turns.
 
-The run is bounded to one GPU sandbox with a 900-second lifetime, eight
+The run is bounded to one GPU sandbox with a 1,800-second lifetime, eight
 sequential CPU sandboxes with 600-second lifetimes, and at most 168 inference
 calls. All sandboxes are terminated on completion or error. At the checked rates
 (L4 $0.80/hour, CPU $0.1419/core-hour, RAM $0.024/GiB-hour), these resource limits
-bound sandbox compute to approximately $0.60, plus image builds. These are
+bound sandbox compute to approximately $1.09, plus image builds. These are
 compute bounds, not an exact invoice; billing and credits may update later.
 
 Artifacts include a recording and target file snapshot for each hop,

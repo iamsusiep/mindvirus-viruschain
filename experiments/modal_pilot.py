@@ -31,7 +31,7 @@ import sys, urllib.request
 request = urllib.request.Request(
     'http://127.0.0.1:8000/v1/chat/completions',
     data=sys.argv[1].encode(), headers={'Content-Type': 'application/json'})
-with urllib.request.urlopen(request, timeout=60) as response:
+with urllib.request.urlopen(request, timeout=180) as response:
     print(response.read().decode())
 """
 
@@ -87,7 +87,7 @@ class ModalBackend:
             "model": MODEL,
             "messages": messages,
             "temperature": kwargs.get("temperature", 0.7),
-            "max_tokens": kwargs.get("max_tokens", 1024),
+            "max_tokens": kwargs.get("max_tokens", 4096),
             "seed": 0,
             "stop": ["<|im_start|>"],
         }
@@ -96,7 +96,7 @@ class ModalBackend:
         record = {"call": self.calls, "phase": self.phase, "request": request}
         try:
             process = await self.server.exec.aio(
-                "python3", "-c", FORWARD, json.dumps(request), timeout=75
+                "python3", "-c", FORWARD, json.dumps(request), timeout=195
             )
             stdout, stderr = await asyncio.gather(
                 process.stdout.read.aio(), process.stderr.read.aio()
@@ -278,7 +278,7 @@ async def main(output, conditions):
             gpu="L4",
             cpu=(4, 4),
             memory=(24576, 24576),
-            timeout=900,
+            timeout=1800,
         )
         logger.info("Started bounded L4 server: %s", server.object_id)
         async with asyncio.timeout(450):
@@ -302,7 +302,7 @@ async def main(output, conditions):
             backend.install(stack)
             # Queue time consumes no model turns. Keep the experiment deadline
             # separate; the GPU sandbox still has its own hard lifetime cap.
-            async with asyncio.timeout(800):
+            async with asyncio.timeout(1600):
                 await run_cases(backend, app, agent_image, tags, results, conditions)
     finally:
         for leftover in [
@@ -326,10 +326,12 @@ async def main(output, conditions):
                     "upstream_commit": "20651e0bff017540e3b738270ba8a434e1948c67",
                     "revision": REVISION,
                     "vllm": "0.30.0",
-                    "gpu_timeout_seconds": 900,
+                    "gpu_timeout_seconds": 1800,
                     "cpu_sandbox_timeout_seconds": 600,
                     "model_calls": backend.calls if backend else 0,
                     "generation_seed": 0,
+                    "agent_output_token_limit": 4096,
+                    "judge_output_token_limit": 2048,
                     "turns_per_agent_per_hop": 10,
                     "max_tool_loops": 2,
                     "hard_mode": "hard",
